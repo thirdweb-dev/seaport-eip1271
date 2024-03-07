@@ -1,6 +1,14 @@
 [profile.default]
+solc-version = "0.8.17"
 src = "src"
 out = "out"
 libs = ["lib"]
+remappings = [
+    'seaport-types/=lib/seaport-types/',
+    '@solady/=lib/solady/src/',
+    'murky/=lib/murky/src/',
+    '@openzeppelin/contracts=lib/openzeppelin-contracts/contracts',
+    'seaport-core/=lib/seaport-core/'
+]
 
 # See more config options https://github.com/foundry-rs/foundry/blob/master/crates/config/README.md#all-options
