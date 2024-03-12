@@ -3,11 +3,11 @@ pragma solidity ^0.8.17;
 
 import {Test} from "forge-std/Test.sol";
 
+import {TypehashDirectory} from "./TypehashDirectory.sol";
 import {OrderComponents} from "seaport-types/src/lib/ConsiderationStructs.sol";
 import {ConsiderationInterface} from "seaport-types/src/interfaces/ConsiderationInterface.sol";
 
 import {MurkyBase} from "murky/common/MurkyBase.sol";
-import {TypehashDirectory} from "./TypehashDirectory.sol";
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 
 /**
