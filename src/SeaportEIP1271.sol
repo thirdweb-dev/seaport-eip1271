@@ -73,6 +73,7 @@ abstract contract SeaportEIP1271 is SeaportOrderParser {
         return keccak256(abi.encodePacked("\x19\x01", _accountDomainSeparator(), typedDataHash));
     }
 
+    /// @notice Returns the EIP712 domain separator for the contract.
     function _accountDomainSeparator() private view returns (bytes32) {
         return keccak256(abi.encode(EIP712_TYPEHASH, HASHED_NAME, HASHED_VERSION, block.chainid, address(this)));
     }
