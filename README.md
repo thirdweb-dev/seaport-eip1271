@@ -2,9 +2,9 @@
 
 This project contains an [EIP-1271](https://eips.ethereum.org/EIPS/eip-1271) `isValidSignature` function implementation that supports validating signatures produced on signing a [Seaport](https://github.com/ProjectOpenSea/seaport) bulk order payload.
 
-- [src/SeaportEIP1271.sol](https://github.com/thirdweb-dev/seaport-eip1271/blob/main/src/SeaportEIP1271.sol): the `EIP1271.isValidSignature` implementation that supports validating Seaport bulk order signatures.
-- [src/SeaportOrderParser.sol](): a helper contract with low-level code for working with Seaport data types, adapted from [GettersAndDerivers](https://github.com/ProjectOpenSea/seaport-core/blob/main/src/lib/GettersAndDerivers.sol) and [Verifiers](https://github.com/ProjectOpenSea/seaport-core/blob/d4e8c74adc472b311ab64b5c9f9757b5bba57a15/src/lib/Verifiers.sol#L151) in the [seaport-core repository](https://github.com/ProjectOpenSea/seaport-core/).
-- [test/SeaportOrderEIP1271.t.sol](https://github.com/thirdweb-dev/seaport-eip1271/blob/main/test/SeaportEIP1271.t.sol): contains a minimal test case that fulfills a bulk order made/signed on behalf of a smart contract inheriting `SeaportEIP1271`. This minimal test case has been adapted from a [bulk order test in the seaport respository](https://github.com/ProjectOpenSea/seaport/blob/main/test/foundry/BulkSignature.t.sol#L47).
+- [`src/SeaportEIP1271.sol`](https://github.com/thirdweb-dev/seaport-eip1271/blob/main/src/SeaportEIP1271.sol): the `EIP1271.isValidSignature` implementation that supports validating Seaport bulk order signatures.
+- [`src/SeaportOrderParser.sol`](): a helper contract with low-level code for working with Seaport data types, adapted from [GettersAndDerivers](https://github.com/ProjectOpenSea/seaport-core/blob/main/src/lib/GettersAndDerivers.sol) and [Verifiers](https://github.com/ProjectOpenSea/seaport-core/blob/d4e8c74adc472b311ab64b5c9f9757b5bba57a15/src/lib/Verifiers.sol#L151) in the [seaport-core repository](https://github.com/ProjectOpenSea/seaport-core/).
+- [`test/SeaportOrderEIP1271.t.sol`](https://github.com/thirdweb-dev/seaport-eip1271/blob/main/test/SeaportEIP1271.t.sol): contains a minimal test case that fulfills a bulk order made/signed on behalf of a smart contract inheriting `SeaportEIP1271`. This minimal test case has been adapted from a [bulk order test in the seaport respository](https://github.com/ProjectOpenSea/seaport/blob/main/test/foundry/BulkSignature.t.sol#L47).
 
 ## Methodology
 
