@@ -1,5 +1,7 @@
 # Seaport bulk listings: EIP-1271 support
 
+> ⚠️ **NOTE**: this contract code's audit is pending.
+
 This project contains an [EIP-1271](https://eips.ethereum.org/EIPS/eip-1271) `isValidSignature` function implementation that supports validating signatures produced on signing a [Seaport](https://github.com/ProjectOpenSea/seaport) bulk order payload.
 
 - [`src/SeaportEIP1271.sol`](https://github.com/thirdweb-dev/seaport-eip1271/blob/main/src/SeaportEIP1271.sol): the `EIP1271.isValidSignature` implementation that supports validating Seaport bulk order signatures.
