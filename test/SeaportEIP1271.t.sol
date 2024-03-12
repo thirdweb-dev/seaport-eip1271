@@ -1,101 +1,31 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.0;
 
+// Base test util
 import {Test} from "forge-std/Test.sol";
-import {SeaportEIP1271} from "src/SeaportEIP1271.sol";
-import {EIP712MerkleTree} from "./utils/EIP712MerkleTree.sol";
-import {ERC721} from "@solady/tokens/ERC721.sol";
 
+// Target contract to test
+import {SeaportEIP1271} from "src/SeaportEIP1271.sol";
+
+// Test util contracts
 import {Seaport} from "./utils/Seaport.sol";
+import {MockERC721} from "./utils/MockERC721.sol";
+import {EIP712MerkleTree} from "./utils/EIP712MerkleTree.sol";
 import {ConduitController} from "seaport-core/src/conduit/ConduitController.sol";
 
+// Test util types
 import {
     ConsiderationItem,
     OfferItem,
     ItemType,
     SpentItem,
+    ReceivedItem,
     OrderComponents,
     Order,
     OrderParameters
 } from "seaport-types/src/lib/ConsiderationStructs.sol";
+import {OrderType} from "seaport-types/src/lib/ConsiderationEnums.sol";
 import {ConsiderationInterface} from "seaport-types/src/interfaces/ConsiderationInterface.sol";
-import {OrderType, BasicOrderType} from "seaport-types/src/lib/ConsiderationEnums.sol";
-import {OrderParameters} from "seaport-types/src/lib/ConsiderationStructs.sol";
-
-import {
-    Create2AddressDerivation_length,
-    Create2AddressDerivation_ptr,
-    EIP_712_PREFIX,
-    EIP712_ConsiderationItem_size,
-    EIP712_DigestPayload_size,
-    EIP712_DomainSeparator_offset,
-    EIP712_OfferItem_size,
-    EIP712_Order_size,
-    EIP712_OrderHash_offset,
-    FreeMemoryPointerSlot,
-    information_conduitController_offset,
-    information_domainSeparator_offset,
-    information_length,
-    information_version_cd_offset,
-    information_version_offset,
-    information_versionLengthPtr,
-    information_versionWithLength,
-    MaskOverByteTwelve,
-    MaskOverLastTwentyBytes,
-    OneWord,
-    OneWordShift,
-    OrderParameters_consideration_head_offset,
-    OrderParameters_counter_offset,
-    OrderParameters_offer_head_offset,
-    TwoWords
-} from "seaport-types/src/lib/ConsiderationConstants.sol";
-
-import {
-    BulkOrderProof_keyShift,
-    BulkOrderProof_keySize,
-    BulkOrder_Typehash_Height_One,
-    BulkOrder_Typehash_Height_Two,
-    BulkOrder_Typehash_Height_Three,
-    BulkOrder_Typehash_Height_Four,
-    BulkOrder_Typehash_Height_Five,
-    BulkOrder_Typehash_Height_Six,
-    BulkOrder_Typehash_Height_Seven,
-    BulkOrder_Typehash_Height_Eight,
-    BulkOrder_Typehash_Height_Nine,
-    BulkOrder_Typehash_Height_Ten,
-    BulkOrder_Typehash_Height_Eleven,
-    BulkOrder_Typehash_Height_Twelve,
-    BulkOrder_Typehash_Height_Thirteen,
-    BulkOrder_Typehash_Height_Fourteen,
-    BulkOrder_Typehash_Height_Fifteen,
-    BulkOrder_Typehash_Height_Sixteen,
-    BulkOrder_Typehash_Height_Seventeen,
-    BulkOrder_Typehash_Height_Eighteen,
-    BulkOrder_Typehash_Height_Nineteen,
-    BulkOrder_Typehash_Height_Twenty,
-    BulkOrder_Typehash_Height_TwentyOne,
-    BulkOrder_Typehash_Height_TwentyTwo,
-    BulkOrder_Typehash_Height_TwentyThree,
-    BulkOrder_Typehash_Height_TwentyFour,
-    EIP712_domainData_chainId_offset,
-    EIP712_domainData_nameHash_offset,
-    EIP712_domainData_size,
-    EIP712_domainData_verifyingContract_offset,
-    EIP712_domainData_versionHash_offset,
-    FreeMemoryPointerSlot,
-    NameLengthPtr,
-    NameWithLength,
-    OneWord,
-    Slot0x80,
-    ThreeWords,
-    ZeroSlot
-} from "seaport-types/src/lib/ConsiderationConstants.sol";
-
-contract MockERC721 is ERC721 {
-    function mint(address to, uint256 tokenId) public {
-        _mint(to, tokenId);
-    }
-}
 
 contract SeaportSigValidator is SeaportEIP1271 {
     address public admin;
@@ -111,10 +41,13 @@ contract SeaportSigValidator is SeaportEIP1271 {
 
 contract SeaportEIP1271Test is Test {
     // Target contract
-    ConduitController private conduitController;
-    Seaport private seaport;
     SeaportSigValidator private validator;
 
+    // Mock seaport contracts
+    Seaport private seaport;
+    ConduitController private conduitController;
+
+    // Mock token contract
     MockERC721 private erc721;
 
     // Signer
@@ -128,6 +61,16 @@ contract SeaportEIP1271Test is Test {
     ConsiderationItem[] considerationItems;
     OrderComponents baseOrderComponents;
     OrderParameters baseOrderParameters;
+
+    // Test event
+    event OrderFulfilled(
+        bytes32 orderHash,
+        address indexed offerer,
+        address indexed zone,
+        address recipient,
+        SpentItem[] offer,
+        ReceivedItem[] consideration
+    );
 
     // Helpers to setup test params
     function _configureOrderParameters(address offerer) internal {
@@ -170,8 +113,9 @@ contract SeaportEIP1271Test is Test {
     }
 
     function setUp() public {
-        // Setup ERC721 contract
-        erc721 = new MockERC721();
+        // Setup seaport contracts
+        conduitController = new ConduitController();
+        seaport = new Seaport(address(conduitController));
 
         // Setup signer.
         string memory offerer = "offerer";
@@ -182,23 +126,19 @@ contract SeaportEIP1271Test is Test {
 
         vm.deal(accountAdmin, 100 ether);
 
-        // Setup seaport contract
-        conduitController = new ConduitController();
-        seaport = new Seaport(address(0x123));
+        // Setup mock ERC721 token contract and mint NFT to signer
+        erc721 = new MockERC721();
+        erc721.mint(address(accountAdmin), 1);
 
-        // Setup validator contract
+        vm.prank(accountAdmin);
+        erc721.setApprovalForAll(address(seaport), true);
+
+        // Setup signature validator contract
         vm.prank(accountAdmin);
         validator = new SeaportSigValidator();
     }
 
     function test_POC() public {
-        // Mint NFT to admin address
-        erc721.mint(address(accountAdmin), 1);
-        vm.prank(accountAdmin);
-
-        // Approve seaport contract to transfer NFT
-        erc721.setApprovalForAll(address(seaport), true);
-
         // Setup seaport bulk order params
         _configureConsiderationItems();
         _configureOrderParameters(address(validator));
@@ -208,14 +148,10 @@ contract SeaportEIP1271Test is Test {
         orderComponents[0] = baseOrderComponents;
         // The other order components can remain empty.
 
+        // Sign the bulk order and get a bulk order signature.
         EIP712MerkleTree merkleTree = new EIP712MerkleTree();
         bytes memory packedSignature = merkleTree.signBulkOrder(
-            address(validator),
-            ConsiderationInterface(address(seaport)),
-            accountAdminPKey,
-            orderComponents,
-            uint24(0),
-            false
+            ConsiderationInterface(address(seaport)), accountAdminPKey, orderComponents, uint24(0), false
         );
 
         Order memory order = Order({
@@ -223,7 +159,18 @@ contract SeaportEIP1271Test is Test {
             signature: abi.encode(packedSignature, baseOrderParameters, seaport.getCounter(accountAdmin))
         });
 
+        // The bulk order signature is 132 bytes long. Per Seaport documentation (https://github.com/ProjectOpenSea/seaport/blob/main/docs/SeaportDocumentation.md#bulk-order-creation)
+        // the tested bulk order signature is made up of: 65 byte ECDSA signature + a 3 byte index +  a series of 32 byte proof elements up to 24 proofs long.
+        //
+        // So this particular signature is 65 + 3 + 32 * 2 = 132 bytes long. Here, '32 * 2' because we are sending only one order + one empty order
+        // (resulting in a bulk order tree of 2 ^ 1 orders).
         assertEq(packedSignature.length, 132);
+
+        // We expect the signature to be valid, and to be sent on behalf of `validator` contract as the signer.
+        vm.expectEmit(true, false, false, false, address(seaport));
+        emit OrderFulfilled(
+            bytes32(0), address(validator), address(0), address(0), new SpentItem[](0), new ReceivedItem[](0)
+        );
         seaport.fulfillOrder{value: 1}(order, bytes32(0));
     }
 }
