@@ -138,7 +138,7 @@ contract SeaportEIP1271Test is Test {
         validator = new SeaportSigValidator();
     }
 
-    function test_POC() public {
+    function test_bulkOrder() public {
         // Setup seaport bulk order params
         _configureConsiderationItems();
         _configureOrderParameters(address(validator));
