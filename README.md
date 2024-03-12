@@ -18,7 +18,7 @@ When a bulk order is made on behalf of a smart contract actor -- by setting the 
 The `isValidSignature` function receives as arguments:
 
 1. a `bytes32` input `_message_` i.e. a digest derived only from the relevant bulk order payload. The digest signed by a signer to create a bulk signature is ultimately derived from this message hash.
-2. a `bytes` input `_signature` which is the signature-to-validate with (optionally) additional data appended to it, such as the proof of inclusion of a single given order in the bulk order tree.
+2. a `bytes` input `_signature` which is the signature-to-validate, with the proof of inclusion of a single given order in the bulk order tree appended to the signature, in case of bulk orders.
 
 ```solidity
 function isValidSignature(bytes32 _message, bytes memory _signature)
@@ -28,7 +28,9 @@ function isValidSignature(bytes32 _message, bytes memory _signature)
         returns (bytes4 magicValue)
 ```
 
-If the length of `_signature` is greater than `65`, the function assumes it is not dealing with a regular ECDSA signature of length 65 bytes, and is instead dealing with a Seaport bulk signature, which is guaranteed to have length >65 bytes. From [Seaport documentation](https://github.com/ProjectOpenSea/seaport/blob/main/docs/SeaportDocumentation.md):
+If the length of `_signature` is greater than `65`, the function assumes it is not dealing with a regular ECDSA signature of length 65 bytes, and is instead dealing with a Seaport bulk signature, which is guaranteed to have length >65 bytes.
+
+From [Seaport documentation](https://github.com/ProjectOpenSea/seaport/blob/main/docs/SeaportDocumentation.md):
 
 > The recipe for a valid bulk signature is: A 64 or 65 byte ECDSA signature + a three byte index + a series of 32 byte proof elements up to 24 proofs long
 
