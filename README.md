@@ -3,7 +3,7 @@
 This project contains an [EIP-1271](https://eips.ethereum.org/EIPS/eip-1271) `isValidSignature` function implementation that supports validating signatures produced on signing a [Seaport](https://github.com/ProjectOpenSea/seaport) bulk order payload.
 
 - [src/SeaportEIP1271.sol](https://github.com/thirdweb-dev/seaport-eip1271/blob/main/src/SeaportEIP1271.sol): the `EIP1271.isValidSignature` implementation that supports validating Seaport bulk order signatures.
-- [test/SeaportOrderEIP1271.t.sol]: contains a minimal test case that fulfills a bulk order made/signed on behalf of a smart contract inheriting `SeaportEIP1271`.
+- [test/SeaportOrderEIP1271.t.sol](https://github.com/thirdweb-dev/seaport-eip1271/blob/main/test/SeaportEIP1271.t.sol): contains a minimal test case that fulfills a bulk order made/signed on behalf of a smart contract inheriting `SeaportEIP1271`.
 
 ## Methodology
 
@@ -11,12 +11,14 @@ From [Seaport documentation](https://github.com/ProjectOpenSea/seaport/blob/main
 
 > A bulk signature is an EIP 712 type Merkle tree where the root is a BulkOrder and the leaves are OrderComponents. Each level will be either a pair of orders or an order and an array. Each level gets hashed up the tree until it’s all rolled up into a single hash, which gets signed. The signature on the rolled up hash is the ECDSA signature referred to throughout.
 
-In other words, a bulk signature is produced on the root of the bulk order tree, which contains the bulk order's individual order components as its leaves. When a bulk order is made on behalf of a smart contract actor -- by setting the smart contract's address as the signer of a bulk signature -- Seaport will call the `EIP1271.isValidSignature` function on the signer contract to validate the bulk signature.
+In other words, a bulk signature is produced on the root of the bulk order tree, which contains the bulk order's individual order components as its leaves.
+
+When a bulk order is made on behalf of a smart contract actor -- by setting the smart contract's address as the signer of a bulk signature -- Seaport will call the `EIP1271.isValidSignature` function on the signer contract to validate the bulk signature.
 
 The `isValidSignature` function receives as arguments:
 
-1. a `bytes32` input `originalMessageHash` i.e. a digest derived only from a bulk order payload
-2. a `bytes` input `data` which is the signature-to-validate with (optionally) additional data appended to it, such as the proof of inclusion of a single given order in the bulk order tree.
+1. a `bytes32` input `_message_` i.e. a digest derived only from the relevant bulk order payload. The digest signed by a signer to create a bulk signature is ultimately derived from this message hash.
+2. a `bytes` input `_signature` which is the signature-to-validate with (optionally) additional data appended to it, such as the proof of inclusion of a single given order in the bulk order tree.
 
 ```solidity
 function isValidSignature(bytes32 _message, bytes memory _signature)
@@ -117,7 +119,6 @@ function isValidSignature(bytes32 _message, bytes memory _signature)
         // ...snip
 ```
 
-## Resources
+## Additional Resources
 
 - Documentation for Seaport bulk order creation: [https://github.com/ProjectOpenSea/seaport/blob/main/docs/SeaportDocumentation.md#bulk-order-creation](https://github.com/ProjectOpenSea/seaport/blob/main/docs/SeaportDocumentation.md#bulk-order-creation)
--
